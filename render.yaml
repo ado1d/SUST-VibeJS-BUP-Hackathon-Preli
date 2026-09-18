@@ -1,0 +1,65 @@
+# Render Blueprint — GridWise LLM API
+# Connect this repo on Render (https://dashboard.render.com/blueprints) and pick
+# branch "newok". Render builds the Dockerfile at the repo root, then runs it
+# on a Docker web service. Secrets are pasted in the Render dashboard once.
+#
+# Files needed alongside this:
+#   - Dockerfile                  (already in repo)
+#   - requirements.txt            (already in repo)
+#
+# Files NOT needed by Render:
+#   - run_tests.sh, public_cases/, tests/   — included in the image only for
+#     in-image troubleshooting; not served. The image runs only the web service.
+
+services:
+  - type: web
+    name: gridwise-api
+    runtime: docker
+    # Pin to the team's branch. Render rebuilds when this branch gets new commits.
+    branch: newok
+    plan: starter                # Starter ($7/mo) — keeps the process warm, no idle spin-down.
+    region: oregon               # Closest to common BUP/BD judging region; change in dashboard if needed.
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Render injects PORT; the Dockerfile consumes ${PORT}. We default to 8000 there
+    # but explicitly pin here so health-check probes and uvicorn agree.
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LOG_LEVEL
+        value: "INFO"
+      # LLM path — required for scoring. Paste your real key in the dashboard.
+      # Render treats keys named like *_KEY as "secret" automatically.
+      - key: OPENAI_API_KEY
+        sync: false               # Paste the real value in the Render UI, not here.
+      # Interpreter model selection — defaults to these if unset, set explicitly so
+      # a future Render default change cannot silently swap the model.
+      - key: OPENAI_MODEL
+        value: "gpt-4o-mini"
+      - key: OPENAI_FALLBACK_MODEL
+        value: "gpt-4.1-mini"
+      # Conservative timeouts: ladder is primary + 1 retry + fallback + LP.
+      # Total wall under judge 30s: 10 + 10 + 8 + ~0.5 = 28.5s worst case, fits
+      # below REQUEST_BUDGET_S=26 by skipping the corrective retry when time is tight.
+      - key: OPENAI_TIMEOUT_S
+        value: "10"
+      - key: OPENAI_FALLBACK_TIMEOUT_S
+        value: "8"
+      - key: REQUEST_BUDGET_S
+        value: "26"
+      # In-process interpretation cache reduces LLM cost across warm requests.
+      - key: CACHE_ENABLED
+        value: "1"
+      - key: CACHE_MAX_ENTRIES
+        value: "512"
+      - key: NUMERIC_TOLERANCE
+        value: "0.01"
+    # Health check wired to the exact endpoint the judge probes.
+    healthCheckPath: /health
+    # Initial deploy + every subsequent push to "newok" triggers a rebuild.
+    autoDeploy: true
+    # Starter plan: 512 MB RAM. SciPy + OpenAI client fits comfortably.
+    # Num workers inside the container is hard-coded to 1 in the Dockerfile;
+    # Render handles horizontal scale via instances: 1 (default).
