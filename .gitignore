@@ -11,5 +11,7 @@ venv/
 dist/
 build/
 
-
-.puku
+# Local tool caches (Puku CLI workspace data, etc.)
+.puku/
+.puku-cli/
+*.tmp
