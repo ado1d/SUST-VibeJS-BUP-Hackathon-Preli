@@ -17,7 +17,10 @@ services:
     runtime: docker
     # Pin to the team's branch. Render rebuilds when this branch gets new commits.
     branch: newok
-    plan: starter                # Starter ($7/mo) — keeps the process warm, no idle spin-down.
+    plan: free                   # Free plan — spins down after 15 min idle; cold start ~30s on wake.
+                                 # For hackathon judging where the judge hammers continuously
+                                 # after first wake-up, this is fine. Switch to `starter`
+                                 # ($7/mo) only if cold-start latency becomes a problem.
     region: oregon               # Closest to common BUP/BD judging region; change in dashboard if needed.
     dockerfilePath: ./Dockerfile
     dockerContext: .
