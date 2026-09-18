@@ -1,6 +1,6 @@
 # GridWise LLM — Smart Campus Energy Optimization
 
-BUP CSE Fest 2026 Hackathon · Online Preliminary · **Team: _<your team name>_**
+BUP CSE Fest 2026 Hackathon · Online Preliminary · **Team: _<SUST_VibeJS>_**
 
 One HTTP API service that interprets campus operator notes with an LLM, validates
 them deterministically, and returns a provably optimal 24-hour battery/solar/grid
