@@ -10,3 +10,7 @@ venv/
 .coverage
 dist/
 build/
+
+# Puku CLI cache and temp files
+.puku/
+.puku-cli/
